@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080d1b">
+<title>HTML TO APK MAKER</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:25px 15px;background:#080d1b;color:white;font-family:Arial,sans-serif}
+main{max-width:550px;margin:auto}
+header{text-align:center;margin:25px 0}
+.logo{background:linear-gradient(135deg,#638cff,#4de1df);color:#07111f;border-radius:18px;padding:17px;display:inline-block;font-weight:bold;font-size:24px}
+h1{font-size:26px}
+p{color:#a9b6cc}
+.card{background:#14213a;padding:22px;border:1px solid #30425f;border-radius:20px}
+label{display:block;margin:18px 0 9px;font-size:14px;font-weight:bold}
+input[type=text]{width:100%;padding:14px;border-radius:10px;background:#091426;border:1px solid #405578;color:white;font-size:15px}
+.upload{padding:30px 12px;text-align:center;border:2px dashed #638cff;border-radius:15px;background:#0b1629}
+input[type=file]{width:100%;margin-top:15px}
+button{width:100%;padding:16px;margin-top:22px;border:0;border-radius:12px;background:linear-gradient(100deg,#6c92ff,#48e0db);font-size:16px;font-weight:bold;color:#07111f}
+button:disabled{opacity:.5}
+#status{display:none;margin-top:18px;padding:14px;background:#091426;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+small{color:#a9b6cc}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="logo">APK</div>
+<h1>HTML TO APK MAKER</h1>
+<p>Convert your HTML website into an Android app</p>
+</header>
+
+<div class="card">
+<label>APP NAME</label>
+<input id="appName" type="text" value="My HTML App" maxlength="30">
+
+<label>UPLOAD INDEX.HTML</label>
+<div class="upload">
+<h2>📄 Select HTML File</h2>
+<input id="html" type="file" accept=".html,text/html">
+<small>Maximum file size: 10 MB</small>
+</div>
+
+<button id="build">⚡ GENERATE APK</button>
+<div id="status"></div>
+</div>
+</main>
+
+<script>
+const file=document.getElementById("html");
+const btn=document.getElementById("build");
+const statusBox=document.getElementById("status");
+
+btn.onclick=async()=>{
+if(!file.files.length){
+alert("Please select index.html first");
+return;
+}
+if(file.files[0].size>10*1024*1024){
+alert("File is too large. Maximum 10 MB.");
+return;
+}
+if(!file.files[0].name.toLowerCase().endsWith(".html")){
+alert("Please select an HTML file.");
+return;
+}
+
+const data=new FormData();
+data.append("html",file.files[0]);
+data.append("appName",document.getElementById("appName").value);
+
+btn.disabled=true;
+btn.textContent="BUILDING APK...";
+statusBox.style.display="block";
+statusBox.textContent="Please wait. APK is being generated...";
+
+try{
+const response=await fetch("/api/build",{
+method:"POST",
+body:data
+});
+
+if(!response.ok){
+const error=await response.json();
+throw new Error(error.error+"\n"+(error.detail||""));
+}
+
+const blob=await response.blob();
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+a.href=url;
+a.download="MyApp.apk";
+a.click();
+URL.revokeObjectURL(url);
+statusBox.textContent="APK generated! Check your Downloads folder.";
+}catch(e){
+statusBox.textContent="ERROR: "+e.message;
+}
+finally{
+btn.disabled=false;
+btn.textContent="⚡ GENERATE APK";
+}
+};
+</script>
+</body>
+</html>
